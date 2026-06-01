@@ -1,7 +1,5 @@
 # Agent Security Sandbox — Prompt Engineering 模組
 
-負責人:蕭任芮 R14525076 | Group 128
-
 這是 Policy Engine 的 prompt engineering 部分。目標:讓 LLM 在每次
 tool call 執行前，扮演「Security Policy Auditor」，判斷該操作是否安全。
 
