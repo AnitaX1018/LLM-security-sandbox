@@ -1,6 +1,5 @@
 """
-prompts.py — Step 3:把 system prompt + few-shot + 待審案例組裝成「訊息列表」
-
+把 system prompt + few-shot + 待審案例組裝成「訊息列表」
 LLM 的 chat API 吃的是一個 messages 列表，像這樣:
   [ {role:"system",...}, {role:"user",...}, {role:"assistant",...}, ... ]
 
@@ -9,7 +8,7 @@ few-shot 的標準做法就是「把範例偽裝成過去的對話」:
   assistant = 範例的理想裁決(正確答案)
 LLM 看到幾組「問→正確答」之後，就會模仿那個模式回答真正的問題。
 
-三層各自聚焦不同維度(對應你報告 4.2 三層架構):
+三層各自聚焦不同維度(對應報告 4.2 三層架構):
   L1 input_scan        : 只看 user/外部內容裡有沒有 override 式注入
   L2 intent_consistency: 看 tool call 是否符合意圖、權限聲稱是否可信
   L3 behavioral_chain  : 看 session 歷史序列是否構成攻擊鏈
@@ -104,6 +103,6 @@ def build_messages(
             messages.append({"role": "assistant",
                              "content": ex_decision.model_dump_json()})
 
-    # 最後才放真正要審查的案例
+    # 放真正要審查的案例
     messages.append({"role": "user", "content": render_case(case)})
     return messages

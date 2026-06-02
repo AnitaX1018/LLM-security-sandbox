@@ -1,8 +1,8 @@
 """
-case.py — 「輸入契約」:Policy Engine 每次收到的一個待審查案例。
+Policy Engine 每次收到的一個待審查案例。
 
-對應 schema.py(輸出契約)。一個案例 = LLM 要看的所有資訊。
-這個結構同時也是你 200 筆資料集每一筆的格式。
+對應 schema.py 一個案例 = LLM 要看的所有資訊。
+200 筆資料集每一筆的格式。
 """
 
 from typing import Optional

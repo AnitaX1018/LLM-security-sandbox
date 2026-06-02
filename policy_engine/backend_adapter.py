@@ -1,12 +1,5 @@
 """
-backend_adapter.py — 對應層:本模組格式 <-> 後端 API 格式
-
-為什麼需要這層？
-  本模組(Policy Engine)的內部資料結構是為了「prompt engineering 的清晰度」
-  而設計;後端 API(陳思群)的格式是為了「伺服器執行與 audit log」而設計。
-  兩者欄位不完全一樣。與其讓任何一邊將就，不如用一層 adapter 做翻譯，
-  兩邊都能保持各自最合理的設計。這是軟體工程的標準做法(防腐層 / ACL)。
-
+本模組格式 <-> 後端 API 格式
 對齊依據:API_介接說明文件.pdf 第 3 章。
 """
 
@@ -47,11 +40,11 @@ def to_tool_call_request(
 
 
 def decision_to_backend_fields(decision: PolicyDecision) -> dict:
-    """把本模組的 PolicyDecision 翻成後端欄位命名。
+    """把 PolicyDecision 翻成後端欄位命名。
 
     對應後端 /tool/call 的 Response 欄位:
-      - 後端有 rationale(裁決原因) + evidence;本模組只有 evidence。
-        → 用 evidence 同時填 rationale(滿足後端，又不逼 LLM 多寫)。
+      - 後端有 rationale(裁決原因) + evidence;本模組只有 evidence
+        → 用 evidence 同時填 rationale
       - policy_violation 後端為自由字串;本模組是 enum，輸出其 value。
     """
     return {
