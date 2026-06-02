@@ -29,7 +29,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from policy_engine.llm_client import MockLLMClient
 from policy_engine.engine import PolicyEngine
 from policy_engine.schema import Decision
-from data.test_cases import TEST_CASES
+from data.dataset_loader import load_dataset
+
+# 自動讀取 data/api_cases.jsonl + data/ground_truth.jsonl（B 的 v2 格式）
+TEST_CASES = load_dataset()
+print(f"已載入資料集：{len(TEST_CASES)} 筆")
 
 
 def is_attack(decision: Decision) -> bool:
