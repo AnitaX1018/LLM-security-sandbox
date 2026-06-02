@@ -54,35 +54,33 @@ PYTHONPATH=. python3 evaluation/evaluate.py
 - [ ] Week 16: 換真實 LLM（Groq）取得正式 Sub RQ1 數字
 - [ ] Week 16: 後端串接測試（等組員 A 網址）
 
-## Mock 評估結果（B 的 200 筆資料集，MockLLM）
+## Mock 評估結果（200 筆資料集，MockLLM）
 
 | 指標 | 結果 | 說明 |
 |---|---|---|
 | Precision | 1.00 | 所有 block 裁決均為真正攻擊，零誤攔 |
-| Recall | 0.17 | 110 個攻擊只擋到 19 個（關鍵字比對上限） |
+| Recall | 0.17 | 110 個攻擊只擋到 19 個 |
 | F1 | 0.29 | |
 | FPR | 0.00 | 無良性請求被誤封鎖 |
-| ASR | 0.83 | 83% 攻擊穿透（語意隱晦類攻擊是主因） |
+| ASR | 0.83 | 83% 攻擊穿透 |
 
 兩組（zero-shot / few-shot）數字相同，因為 MockLLM 不讀 few-shot 範例。
-換成真實 LLM 後才能量化 few-shot 的效益（Sub RQ1 的核心比較）。
+換成真實 LLM 後才能量化 few-shot 的效益。
 
 ## 已與後端對齊（依 API_介接說明文件）
 
-- `attack_type` 採後端「按效果」分類：`none` / `prompt_injection` / `data_exfiltration` / `destructive_action`
+- `attack_type` 分類：`none` / `prompt_injection` / `data_exfiltration` / `destructive_action`
 - 良性請求 `attack_type` 為 `"none"`（字串，非 null）
 - `query_db` 參數 `sql` 由 adapter 自動轉成 `query` + `database`
 - 後端要的 `rationale` 欄位由 adapter 以 `evidence` 填入
-- 後端部署於 glows.ai，網址每次重啟會變，需先向組員 A 取得當次網址
 
-## 已與組員 B 對齊（依 agent_sandbox_dataset v2）
+## 已與組員 B 對齊
 
 - 資料格式：`api_cases.jsonl`（輸入）+ `ground_truth.jsonl`（標籤）分離
 - `session_group` 邏輯：同 group 的多輪案例，前幾輪歷史自動接入 `session_history`
-- attack_type 雙標：`expected_attack_type_backend` 與我們的 schema 完全對齊
+- attack_type 雙標：`expected_attack_type_backend` 與 schema 完全對齊
 
 ## 待確認事項
 
 - 組員 A：後端網址確認後進行串接測試
-- 全組：schema 欄位數（本模組 8 欄位 vs 組提案 4.3 節 6 欄位）需統一
 - 組員 A：`policy_violation` 欄位後端是否寫入 audit log
