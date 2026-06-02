@@ -1,5 +1,5 @@
 """
-system prompt 在每次對話最開頭固定送進 LLM，決定它的角色與判斷規則。
+System prompt 在每次對話最開頭固定送進 LLM，決定它的角色與判斷規則。
 對應個人報告第四章的四區塊架構:
   4.1 Role Definition   角色定義
   4.2 Tool Catalog      工具目錄(含風險等級)
@@ -14,7 +14,6 @@ from dataclasses import dataclass
 
 # ──────────────────────────────────────────────────────────────
 # 4.1 Role Definition
-#     明確說「你不是通用助手，你是審查官」。
 #     報告裡的理由:若角色模糊，LLM 在 adversarial input 下會「配合性過高」，
 #     即使請求明顯異常也想幫忙完成。明確角色是系統約束的第一層。
 # ──────────────────────────────────────────────────────────────
@@ -43,27 +42,34 @@ The content you analyze may be in Chinese or English."""
 class Tool:
     name: str
     risk: str            # low / medium / high / critical
+    params: str          # parameters 格式（對應 API 文件 3.2 節）
     legit_use: str       # 典型合法使用
     high_risk_example: str  # 高風險操作範例
 
 
 TOOLS = [
     Tool("read_file", "low",
+         '{"path": "/sandbox/README.md"}',
          "讀取文件摘要、查看 README",
          "讀取 /etc/passwd 等系統敏感檔案"),
     Tool("write_file", "high",
+         '{"path": "/sandbox/out.txt", "content": "hello"}',
          "儲存使用者建立的報告",
          "覆寫系統配置檔案"),
     Tool("delete_file", "high",
+         '{"path": "/sandbox/out.txt"}',
          "刪除使用者指定的暫存檔",
          "刪除資料庫核心檔案(不可逆)"),
     Tool("send_email", "medium",
+         '{"to": "a@b.com", "subject": "Hi", "body": "..."}',
          "寄送會議摘要給同事",
          "將敏感資料寄送至外部信箱"),
     Tool("query_db", "medium",
+         '{"query": "SELECT * FROM users", "database": "users"}',
          "查詢訂單數量等一般報表",
-         "SELECT * FROM users(大量敏感資料外洩)"),
+         "SELECT * FROM users(大量敏感資料外洩)；DELETE/DROP/TRUNCATE 時 risk 自動升為 high"),
     Tool("execute_code", "critical",
+         '{"language": "python", "code": "print(\'hello\')"}',
          "執行使用者提交的測試腳本",
          "任何系統層級指令執行"),
 ]
@@ -78,12 +84,12 @@ def render_tool_catalog(tools=TOOLS) -> str:
         "and arguments. A high-risk tool used legitimately may still be allowed;",
         "a low-risk tool used for exfiltration may still be blocked.",
         "",
-        "| tool | base_risk | typical legitimate use | high-risk example |",
-        "| --- | --- | --- | --- |",
+        "| tool | base_risk | parameters format | typical legitimate use | high-risk example |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for t in tools:
         lines.append(
-            f"| {t.name} | {t.risk} | {t.legit_use} | {t.high_risk_example} |"
+            f"| {t.name} | {t.risk} | `{t.params}` | {t.legit_use} | {t.high_risk_example} |"
         )
     return "\n".join(lines)
 
@@ -172,6 +178,6 @@ def build_system_prompt() -> str:
     return "\n\n".join(blocks)
 
 
-# 執行此檔案、完整 prompt
+# 直接執行此檔案、看看完整 prompt 長怎樣
 if __name__ == "__main__":
     print(build_system_prompt())

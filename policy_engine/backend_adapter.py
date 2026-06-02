@@ -35,7 +35,7 @@ def to_tool_call_request(
         "tool_name": case.tool_call.name,
         "parameters": _normalize_params(case.tool_call.name, case.tool_call.args),
         "user_prompt": case.user_message,
-        "agent_context": case.external_content,  # 外部內容當作 agent context
+        "agent_context": case.external_content or "",  # 後端用 "" 不用 null
     }
 
 
@@ -43,7 +43,7 @@ def decision_to_backend_fields(decision: PolicyDecision) -> dict:
     """把 PolicyDecision 翻成後端欄位命名。
 
     對應後端 /tool/call 的 Response 欄位:
-      - 後端有 rationale(裁決原因) + evidence;本模組只有 evidence
+      - 後端有 rationale(裁決原因) + evidence;本模組只有 evidence。
         → 用 evidence 同時填 rationale
       - policy_violation 後端為自由字串;本模組是 enum，輸出其 value。
     """
