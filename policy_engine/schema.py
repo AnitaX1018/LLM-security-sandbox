@@ -68,6 +68,7 @@ class PolicyViolation(str, Enum):
     DATA_EXFILTRATION = "data_exfiltration"      # 資料外洩
     UNAUTHORIZED_DELETE = "unauthorized_delete"  # 未授權刪除
     IDENTITY_SPOOFING = "identity_spoofing"      # 身份偽裝
+    PROMPT_INJECTION = "prompt_injection"        # 指令注入（對齊 AttackType）
 
 
 # ──────────────────────────────────────────────────────────────
@@ -109,6 +110,11 @@ class PolicyDecision(BaseModel):
             "簡短的判斷依據。刻意不要求完整 chain-of-thought，"
             "以降低攻擊者反推 policy engine 邏輯的風險。"
         ),
+    )
+
+    rationale: Optional[str] = Field(
+        default=None,
+        description="裁決原因的完整說明，對應後端 API rationale 欄位。選填：MockLLM 階段可為 None，真實 LLM 階段建議必填。",
     )
 
     recommended_action: str = Field(
