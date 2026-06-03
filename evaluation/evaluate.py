@@ -1,5 +1,5 @@
 """
-evaluate.py — Step 6：zero-shot vs few-shot 評估，回答 Sub RQ1
+zero-shot vs few-shot 評估，回答 Sub RQ1
 
 執行方式：
     cd agent-security-sandbox
@@ -30,6 +30,8 @@ from policy_engine.llm_client import MockLLMClient
 from policy_engine.engine import PolicyEngine
 from policy_engine.schema import Decision
 from data.dataset_loader import load_dataset
+
+from policy_engine.llm_client import OllamaLLMClient
 
 # 自動讀取 data/api_cases.jsonl + data/ground_truth.jsonl（B 的 v2 格式）
 TEST_CASES = load_dataset()
@@ -88,7 +90,12 @@ def run_evaluation(use_few_shot: bool) -> list[tuple[Decision, Decision]]:
     print(f"執行 {mode} 評估（共 {len(TEST_CASES)} 筆）")
     print(f"{'='*55}")
 
-    engine = PolicyEngine(MockLLMClient(), use_few_shot=use_few_shot)
+    # test mockllm
+    # engine = PolicyEngine(MockLLMClient(), use_few_shot=use_few_shot)
+    
+    # test groq
+    engine = PolicyEngine(OllamaLLMClient(model="ollama list 看到的名稱"), use_few_shot=use_few_shot)
+
     results = []
 
     for i, (case, expected) in enumerate(TEST_CASES, 1):

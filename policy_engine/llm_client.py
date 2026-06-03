@@ -1,5 +1,5 @@
 """
-llm_client.py — Step 5:LLM 呼叫 + 輸出驗證 + 自動重試
+LLM 呼叫 + 輸出驗證 + 自動重試
 
 三個角色:
   BaseLLMClient   介面定義(之後換真實 LLM 只要繼承這個就好)
@@ -25,8 +25,7 @@ class BaseLLMClient(ABC):
 
 # ──────────────────────────────────────────────────────────────
 # 2. 假的 LLM：根據待審案例的關鍵字決定裁決
-#    這讓整條 pipeline 可以離線跑通，不需要任何 API key。
-#    之後要換成真實 LLM，只要新增 GroqLLMClient(BaseLLMClient) 就好。
+#    之後要換成真實 LLM，只要新增 BaseLLMClient 就好。
 # ──────────────────────────────────────────────────────────────
 
 class MockLLMClient(BaseLLMClient):
@@ -47,7 +46,7 @@ class MockLLMClient(BaseLLMClient):
     ]
 
     def complete(self, messages: list[dict]) -> str:
-        # 找最後一則 user 訊息（就是待審案例的內容）
+        # 找最後一則 user 訊息（待審案例的內容）
         user_content = ""
         for m in reversed(messages):
             if m["role"] == "user":
@@ -84,9 +83,8 @@ class MockLLMClient(BaseLLMClient):
 # ──────────────────────────────────────────────────────────────
 # 3. 重試機制：呼叫 LLM → 驗證輸出 → 失敗就重試
 #
-#    為什麼要重試？
 #      LLM 有時輸出格式不對（多了說明文字、缺欄位...）。
-#      Pydantic 丟出 ValidationError → 我們抓住它 →
+#      Pydantic 丟出 ValidationError → 抓住它 →
 #      把錯誤原因告訴 LLM → 再試一次，最多 max_retries 次。
 # ──────────────────────────────────────────────────────────────
 
@@ -135,3 +133,43 @@ def call_with_retry(
             print(f"  [錯誤] 第 {attempt}/{max_retries} 次: {e}")
 
     raise RuntimeError(f"超過最大重試次數 ({max_retries})，最後錯誤: {last_error}")
+
+
+    class OllamaLLMClient(BaseLLMClient):
+    """本地 Ollama LLM 客戶端（glows.ai 上使用，無 token 限制）。
+
+    使用方式：
+        client = OllamaLLMClient(model="模型名稱")
+        engine = PolicyEngine(client, use_few_shot=True)
+    """
+
+    def __init__(
+        self,
+        model: str,
+        base_url: str = "http://localhost:11434",
+        temperature: float = 0.0,
+    ):
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.temperature = temperature
+
+    def complete(self, messages: list[dict]) -> str:
+        import json
+        import urllib.request
+
+        url = f"{self.base_url}/v1/chat/completions"
+        payload = json.dumps({
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "stream": False,
+        }).encode()
+
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read())
+        return result["choices"][0]["message"]["content"]
