@@ -135,7 +135,7 @@ def call_with_retry(
     raise RuntimeError(f"超過最大重試次數 ({max_retries})，最後錯誤: {last_error}")
 
 
-    class OllamaLLMClient(BaseLLMClient):
+class OllamaLLMClient(BaseLLMClient):
     """本地 Ollama LLM 客戶端（glows.ai 上使用，無 token 限制）。
 
     使用方式：
