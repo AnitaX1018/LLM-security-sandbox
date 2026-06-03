@@ -94,7 +94,7 @@ def run_evaluation(use_few_shot: bool) -> list[tuple[Decision, Decision]]:
     # engine = PolicyEngine(MockLLMClient(), use_few_shot=use_few_shot)
     
     # test groq
-    engine = PolicyEngine(OllamaLLMClient(model="ollama list 看到的名稱"), use_few_shot=use_few_shot)
+    engine = PolicyEngine(OllamaLLMClient(model="gpt-oss:20b"), use_few_shot=use_few_shot)
 
     results = []
 

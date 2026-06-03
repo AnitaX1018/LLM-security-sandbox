@@ -157,7 +157,7 @@ class OllamaLLMClient(BaseLLMClient):
         import json
         import urllib.request
 
-        url = f"{self.base_url}/v1/chat/completions"
+        url = f"{self.base_url}/api/chat"
         payload = json.dumps({
             "model": self.model,
             "messages": messages,
@@ -172,4 +172,4 @@ class OllamaLLMClient(BaseLLMClient):
         )
         with urllib.request.urlopen(req, timeout=120) as resp:
             result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"]
+        return result["message"]["content"]
