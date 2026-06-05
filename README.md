@@ -1,7 +1,5 @@
 # Agent Security Sandbox — Prompt Engineering 模組
 
-負責人：蕭任芮 R14525076 ｜ Group 128
-
 Policy Engine 的 Prompt Engineering 子系統。目標：讓 LLM 在每次 tool call 執行前，
 扮演「Security Policy Auditor」，判斷該操作是否安全。
 
@@ -23,7 +21,7 @@ Tool Call Request
  L3 Behavioral Chain (LLM)  ← LLM 看規則分析 + session 歷史做最終裁決
       │
       ▼
- PolicyDecision（最嚴格那層）
+ PolicyDecision
 ```
 
 ## 資料夾結構
@@ -35,14 +33,14 @@ agent_security_sandbox/
 │   ├── case.py              ← 輸入契約（待審案例 / 資料集格式）
 │   ├── rule_analyzer.py     ← L3 確定性規則層（升級分數計算）
 │   ├── system_prompt.py     ← 四區塊 System Prompt（含 risk level 閾值）
-│   ├── few_shot.py          ← Few-shot 範例庫（16 例）
+│   ├── few_shot.py          ← Few-shot 16 例
 │   ├── prompts.py           ← 三層 Prompt 組裝（含 zero/few-shot 開關）
-│   ├── llm_client.py        ← MockLLM / GroqLLMClient / OllamaLLMClient
+│   ├── llm_client.py        ← MockLLM / OllamaLLMClient
 │   ├── engine.py            ← 三層 Pipeline 串接（Hybrid Rule + LLM）
 │   └── backend_adapter.py   ← 本模組格式 <-> 後端 API 格式
 ├── data/
-│   ├── api_cases.jsonl      ← 組員 B 的 200 筆測試案例（輸入）
-│   ├── ground_truth.jsonl   ← 組員 B 的 200 筆 ground truth 標籤
+│   ├── api_cases.jsonl      ← 200 筆測試案例
+│   ├── ground_truth.jsonl   ← 200 筆 ground truth 標籤
 │   └── dataset_loader.py    ← 載入資料集（回傳 decision+risk_level+attack_type）
 ├── evaluation/
 │   └── evaluate.py          ← zero-shot vs few-shot 評估（三欄位比對）
@@ -53,22 +51,21 @@ agent_security_sandbox/
     └── test_backend_connection.py ← 後端串接測試
 ```
 
-## 快速開始
-
+## 測試
 ```bash
 # 安裝
 pip install pydantic
 
-# 本機測試（離線，不需 glows.ai）
+# 可本機測試
 PYTHONPATH=. python3 tests/test_schema.py
 PYTHONPATH=. python3 tests/test_engine.py
 PYTHONPATH=. python3 tests/test_prompts.py
 
-# 後端串接測試（填入組員 A 的網址後）
+# 後端串接測試
 # BACKEND_URL = "https://..." 填入 tests/test_backend_connection.py
 PYTHONPATH=. python3 tests/test_backend_connection.py
 
-# 完整評估（需在 glows.ai img-neqm8dp2 上跑）
+# 完整評估（需在 glows.ai 上跑）
 PYTHONPATH=. python3 evaluation/evaluate.py
 ```
 
@@ -105,7 +102,6 @@ cases = load_dataset()  # list of (ToolCallCase, {"decision":..., "risk_level":.
 ## 在 glows.ai 上執行
 
 ```bash
-# 開機選 img-neqm8dp2（已有 gpt-oss:20b）
 git clone https://github.com/AnitaX1018/LLM-security-sandbox.git
 cd LLM-security-sandbox
 pip install pydantic
