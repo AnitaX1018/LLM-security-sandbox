@@ -118,5 +118,5 @@ if __name__ == "__main__":
     test_result_is_most_severe()
     test_few_shot_mode_returns_valid_decision()
     print("=" * 55)
-    print("全部測試通過 ✓")
+    print("全部測試通過")
     print("=" * 55)
