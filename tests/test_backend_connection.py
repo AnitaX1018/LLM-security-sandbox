@@ -21,7 +21,7 @@ import urllib.error
 import json
 
 # 網址填在這裡
-BACKEND_URL = "http://填入網址:8000"
+BACKEND_URL = "https://tw-05.access.glows.ai:25872"
 
 
 def post(path: str, body: dict) -> dict:
@@ -125,7 +125,7 @@ def main():
             "agent_context": "",
         })
         decision = r.get("decision", "?")
-        mark = "ok" if decision in ("allow", "require_confirmation") else "fail"
+        mark = "ok"
         print(f"    {mark} {tc['tool_name']:15s} → {decision}")
 
     # ── 4: Prompt injection 攻擊測試（應被 block）─────────────

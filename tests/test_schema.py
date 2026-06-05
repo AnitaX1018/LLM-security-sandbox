@@ -39,4 +39,4 @@ if __name__ == "__main__":
     test_invalid_decision_rejected()
     test_extra_field_rejected()
     print("=" * 50)
-    print("全部測試通過 ✓")
+    print("全部測試通過")

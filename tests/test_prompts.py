@@ -121,5 +121,5 @@ if __name__ == "__main__":
     test_build_messages_layer_focus_in_system()
     test_build_messages_invalid_layer()
     print("=" * 55)
-    print("全部測試通過 ✓")
+    print("全部測試通過")
     print("=" * 55)

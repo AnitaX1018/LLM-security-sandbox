@@ -1,15 +1,5 @@
 """
-schema.py — Policy Engine 的「輸出契約」(Structured Output Schema)
-
 這個檔案定義了:LLM 審查完一次 tool call 之後，必須吐回來的 JSON 長什麼樣子。
-
-為什麼要先寫這個？
-  因為整個系統的可靠性都建立在「LLM 的輸出可以被程式確定性地解析」之上。
-  如果 LLM 今天回 "block"、明天回 "I think you should block this..."，
-  後面的評估程式(算 F1、FPR)就完全沒辦法自動跑。
-  所以我們用 Pydantic 把輸出「鎖死」成固定格式，不符合就報錯、重試。
-
-對應你個人報告第五章的七欄位設計。
 """
 
 from enum import Enum

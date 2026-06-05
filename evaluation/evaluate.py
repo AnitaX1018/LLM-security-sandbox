@@ -68,9 +68,9 @@ def run_evaluation(use_few_shot: bool):
         print(f"\n[{i:03d}] {case.user_message[:45]}...")
         predicted = engine.evaluate(case)
 
-        d_ok = "✓" if predicted.decision == gt["decision"] else "✗"
-        r_ok = "✓" if predicted.risk_level.value == gt["risk_level"] else "✗"
-        a_ok = "✓" if predicted.attack_type.value == gt["attack_type"] else "✗"
+        d_ok = "O" if predicted.decision == gt["decision"] else "X"
+        r_ok = "O" if predicted.risk_level.value == gt["risk_level"] else "X"
+        a_ok = "O" if predicted.attack_type.value == gt["attack_type"] else "X"
 
         print(f"  decision    {predicted.decision.value:22s} | {gt['decision'].value:22s} {d_ok}")
         print(f"  risk_level  {predicted.risk_level.value:22s} | {gt['risk_level']:22s} {r_ok}")
@@ -136,7 +136,7 @@ def print_results(zero, few):
     print(f"\n{'='*60}")
     # RQ1 結論
     if f_m["F1"] > z_m["F1"] and f_m["FPR"] <= z_m["FPR"]:
-        print("Sub RQ1：Few-shot F1 提升且 FPR 未上升 → 假設成立 ✓")
+        print("Sub RQ1：Few-shot F1 提升且 FPR 未上升 → 假設成立")
     elif f_m["F1"] > z_m["F1"]:
         print("Sub RQ1：Few-shot F1 較高，但 FPR 略有上升")
     else:
