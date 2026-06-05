@@ -108,6 +108,52 @@ def test_few_shot_mode_returns_valid_decision():
     print("[通過] 測試 5：few-shot 模式回傳合法 PolicyDecision")
 
 
+def test_escalation_detected():
+    """L3 處理升級攻擊時，rule_analyzer 的分析應注入 prompt（PRE-ANALYSIS 區塊）。
+
+    L3 的設計是：rule_analyzer 先算分數 → 注入 LLM prompt → LLM 做裁決。
+    這個測試驗證「注入」這個步驟確實發生。
+    """
+    from policy_engine.prompts import build_messages
+    from policy_engine.rule_analyzer import analyze_behavior
+
+    case = make_escalation_case()
+    analysis = analyze_behavior(case)
+    # 升級案例的分數應 >= 50
+    assert analysis.escalation_score >= 50, \
+        f"升級案例分數 {analysis.escalation_score} 應 >= 50"
+
+    # L3 的 messages 應包含 PRE-ANALYSIS 區塊
+    messages = build_messages(case, layer="behavioral_chain",
+                              use_few_shot=False,
+                              extra_context=analysis.to_prompt_block(case))
+    last_user_msg = messages[-1]["content"]
+    assert "L3 SESSION BEHAVIORAL CONTEXT" in last_user_msg, "L3 prompt 應包含 SESSION CONTEXT 區塊"
+    assert "Escalation Score" in last_user_msg, "L3 prompt 應包含升級分數"
+    print(f"[通過] 測試 6：升級分數 = {analysis.escalation_score}，"
+          f"PRE-ANALYSIS 已注入 L3 prompt")
+
+
+def test_rule_analyzer_scores_escalation():
+    """rule_analyzer 對典型外洩鏈應給出高升級分數（>= 60）。"""
+    from policy_engine.rule_analyzer import analyze_behavior
+    result = analyze_behavior(make_escalation_case())
+    assert result.escalation_score >= 50, \
+        f"典型外洩鏈升級分數應 >= 50，實際：{result.escalation_score}"
+    assert len(result.patterns_detected) > 0, "應偵測到至少一個攻擊模式"
+    print(f"[通過] 測試 7：升級分數 = {result.escalation_score}，"
+          f"模式 = {result.patterns_detected}")
+
+
+def test_rule_analyzer_benign_low_score():
+    """rule_analyzer 對良性案例應給出低升級分數（< 30）。"""
+    from policy_engine.rule_analyzer import analyze_behavior
+    result = analyze_behavior(make_benign_case())
+    assert result.escalation_score < 30, \
+        f"良性案例升級分數應 < 30，實際：{result.escalation_score}"
+    print(f"[通過] 測試 8：良性案例升級分數 = {result.escalation_score}（低風險）")
+
+
 if __name__ == "__main__":
     print("=" * 55)
     print("執行 engine 測試")
@@ -117,34 +163,9 @@ if __name__ == "__main__":
     test_early_exit_on_block()
     test_result_is_most_severe()
     test_few_shot_mode_returns_valid_decision()
+    test_escalation_detected()
+    test_rule_analyzer_scores_escalation()
+    test_rule_analyzer_benign_low_score()
     print("=" * 55)
-    print("全部測試通過")
+    print("全部測試通過 ✓")
     print("=" * 55)
-
-
-def test_escalation_injection():
-    from policy_engine.prompts import build_messages
-    from policy_engine.rule_analyzer import analyze_behavior
-    case = make_escalation_case()
-    analysis = analyze_behavior(case)
-    assert analysis.escalation_score >= 50, f"分數應 >= 50，實際：{analysis.escalation_score}"
-    msgs = build_messages(case, layer="behavioral_chain", use_few_shot=False, extra_context=analysis.to_prompt_block())
-    assert "PRE-ANALYSIS" in msgs[-1]["content"]
-    print(f"[通過] 測試 6：升級分數={analysis.escalation_score}，PRE-ANALYSIS 已注入 L3")
-
-def test_rule_analyzer_high_score():
-    from policy_engine.rule_analyzer import analyze_behavior
-    r = analyze_behavior(make_escalation_case())
-    assert r.escalation_score >= 50
-    assert len(r.patterns_detected) > 0
-    print(f"[通過] 測試 7：外洩鏈分數={r.escalation_score}，模式={r.patterns_detected}")
-
-def test_rule_analyzer_low_score():
-    from policy_engine.rule_analyzer import analyze_behavior
-    r = analyze_behavior(make_benign_case())
-    assert r.escalation_score < 30
-    print(f"[通過] 測試 8：良性分數={r.escalation_score}")
-
-test_escalation_injection()
-test_rule_analyzer_high_score()
-test_rule_analyzer_low_score()

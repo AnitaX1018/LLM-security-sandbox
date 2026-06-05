@@ -19,7 +19,7 @@ from policy_engine.case import ToolCallCase
 from policy_engine.schema import PolicyDecision, Decision
 from policy_engine.prompts import build_messages
 from policy_engine.llm_client import BaseLLMClient, call_with_retry
-from policy_engine.rule_analyzer import analyze_behavior
+from policy_engine.rule_analyzer import (analyze_behavior, build_session_summary)
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +40,8 @@ class PolicyEngine:
         result = engine.evaluate(case)
         print(result.decision.value)
     """
-
-    def __init__(self, llm_client: BaseLLMClient, use_few_shot: bool = True):
+        # 新增 ablation_mode 參數
+    def __init__(self, llm_client: BaseLLMClient, use_few_shot: bool = True, ablation_mode: bool = False):
         """
         Args:
             llm_client : LLM 客戶端（Mock 或真實）
@@ -49,9 +49,9 @@ class PolicyEngine:
         """
         self.client = llm_client
         self.use_few_shot = use_few_shot
+        self.ablation_mode = ablation_mode  # True: 強制跑完三層供實驗對照
 
     def evaluate(self, case: ToolCallCase) -> PolicyDecision:
-        """對一個案例跑完三層審查，回傳最終裁決。"""
         results: dict[str, PolicyDecision] = {}
 
         for layer in LAYERS:
@@ -59,7 +59,6 @@ class PolicyEngine:
             print(f"  → 執行 {layer}...")
 
             if layer == "behavioral_chain":
-                # L3 專屬：先執行確定性規則分析，注入升級分數
                 analysis = analyze_behavior(case)
                 logger.info(
                     "Behavioral analysis: score=%d, patterns=%s",
@@ -69,7 +68,7 @@ class PolicyEngine:
                 messages = build_messages(
                     case, layer=layer,
                     use_few_shot=self.use_few_shot,
-                    extra_context=analysis.to_prompt_block(),
+                    extra_context=analysis.to_prompt_block(case), # 這裡傳入 case 給 L3 產生 Summary
                 )
             else:
                 messages = build_messages(
@@ -80,9 +79,14 @@ class PolicyEngine:
             decision = call_with_retry(self.client, messages)
             results[layer] = decision
 
+            # 修改 Early Exit 邏輯
             if decision.decision == Decision.BLOCK:
-                logger.info("Layer %s returned block — early exit", layer)
-                print(f"    block — 提前結束")
-                break
+                if self.ablation_mode:
+                    logger.info("Layer %s returned block — continuing for ablation study", layer)
+                    print(f"    block — 記錄結果但繼續執行 (Ablation Mode)")
+                else:
+                    logger.info("Layer %s returned block — early exit", layer)
+                    print(f"    block — 提前結束")
+                    break
 
         return max(results.values(), key=lambda d: SEVERITY[d.decision])
