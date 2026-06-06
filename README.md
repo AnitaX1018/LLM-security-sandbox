@@ -1,7 +1,7 @@
 # Agent Security Sandbox — Prompt Engineering 模組
 
-Policy Engine 的 Prompt Engineering 子系統。目標：讓 LLM 在每次 tool call 執行前，
-扮演「Security Policy Auditor」，判斷該操作是否安全。
+Agent Security Sandbox 的 Policy Engine 完整實作，包含 LLM 三層審查 Pipeline、
+Hybrid Rule + LLM 行為鏈分析、Few-shot Prompt Engineering 及評估框架。
 
 ## 架構（Hybrid Rule + LLM）
 
