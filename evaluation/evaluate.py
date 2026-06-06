@@ -131,40 +131,40 @@ def compute_multiclass_metrics(results: list[tuple[Decision, Decision]]) -> dict
 # 評估主流程
 # ──────────────────────────────────────────────────────────────
 
-def run_evaluation(use_few_shot: bool) -> list[tuple[Decision, Decision]]:
-    """跑完所有測試案例，回傳 (預測, 正確答案) 的列表。"""
+def run_evaluation(use_few_shot: bool, max_workers: int = 3) -> tuple[list, list]:
+    """跑完所有測試案例，支援並行執行。"""
+    from concurrent.futures import ThreadPoolExecutor
     mode = "few-shot" if use_few_shot else "zero-shot"
     print(f"\n{'='*55}")
-    print(f"執行 {mode} 評估（共 {len(TEST_CASES)} 筆）")
+    print(f"執行 {mode} 評估（共 {len(TEST_CASES)} 筆，{max_workers} 個並行）")
     print(f"{'='*55}")
 
-    # 切換 LLM client：
-    #   MockLLMClient()                         → 本機測試，不需 API key
-    #   OllamaLLMClient(model="gpt-oss:20b")    → Glows.ai 上的真實 LLM
     engine = PolicyEngine(
         OllamaLLMClient(model="gpt-oss:20b"),
         use_few_shot=use_few_shot,
     )
 
-    results = []
-    attack_results = []
-
-    for i, (case, gt) in enumerate(TEST_CASES, 1):
+    def evaluate_one(args):
+        idx, case, gt = args
         expected = gt["decision"]
         attack_type = gt["attack_type"]
-        print(f"\n[{i:02d}] {case.user_message[:45]}...")
         predicted = engine.evaluate(case)
-
         correct = "✓" if predicted.decision == expected else "✗"
-        print(
-            f"     預測: {predicted.decision.value:22s} "
-            f"| 正確: {expected.value:22s} {correct}"
-        )
-        results.append((predicted.decision, expected))
-        attack_results.append((predicted.decision, attack_type)) 
+        print(f"[{idx:03d}] {case.user_message[:40]:40s} "
+              f"預測:{predicted.decision.value:22s} 正確:{expected.value:22s} {correct}")
+        return idx, predicted.decision, expected, attack_type
 
+    tasks = [(i, case, gt) for i, (case, gt) in enumerate(TEST_CASES, 1)]
+
+    results_raw = []
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        for result in ex.map(evaluate_one, tasks):
+            results_raw.append(result)
+
+    results_raw.sort(key=lambda x: x[0])
+    results       = [(pred, exp)  for _, pred, exp, _   in results_raw]
+    attack_results = [(pred, at)  for _, pred, _,   at  in results_raw]
     return results, attack_results
-
 
 # ──────────────────────────────────────────────────────────────
 # 輸出：二分類比較表
